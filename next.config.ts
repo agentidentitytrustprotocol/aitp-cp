@@ -1,6 +1,21 @@
+import path from 'node:path';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Emit a self-contained server bundle at `.next/standalone/`. The
+  // Dockerfile copies this directory verbatim into the runner image
+  // instead of installing node_modules a second time. Without this
+  // option Next.js does not produce that directory and the Docker
+  // build fails with "/.next/standalone: not found".
+  output: 'standalone',
+
+  // The CP imports the `aitp` NAPI binding via a `file:` dep that
+  // points at a sibling repo. Setting the tracing root one directory
+  // up tells Next to include sibling-workspace files in the standalone
+  // output (and preserves the `aitp-control-plane/` prefix the
+  // Dockerfile's CMD expects: `node aitp-control-plane/server.js`).
+  outputFileTracingRoot: path.join(__dirname, '..'),
+
   // Packages that Node should `require()` at runtime instead of letting
   // webpack bundle them. `aitp` ships a native NAPI binary; the OTel
   // SDK pulls in @grpc/grpc-js which uses Node built-ins (fs, net, tls)
